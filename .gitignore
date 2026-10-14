@@ -3,6 +3,8 @@ dist/
 .env
 .env.local
 github_token
+*_apikey
+.*_apikey
 *.log
 .DS_Store
 coverage/

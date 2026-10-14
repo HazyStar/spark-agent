@@ -1,111 +1,93 @@
 # Spark Agent
 
-**A minimal open-source coding agent harness** — not a fork of Claude Code / Codex / DeepSeek Harness.
+**面向国内大模型 API 的迷你 Coding Agent Harness**（MIT）
 
-> 中文：这是一个**自研、可读、MIT 开源**的迷你 Coding Agent，用来展示「Agent 循环 + 工具调用」的核心，而不是 fork 大型产品。适合作为作品集样例与二次开发起点。
+不是 Claude Code / Codex / Cursor / DeepSeek Harness 的 fork，而是一个小而完整的自研运行时，用来验证：
 
-Spark Agent shows the *core loop* behind modern coding agents:
+> 国内模型并不「天生不会写代码」——缺的是适合它们的 Harness（工具调用、小步修改、强制验证）。
 
 ```text
-user → LLM (tool calling) → tools (fs / shell) → observe → repeat → final answer
+任务 → LLM（Tool Calling）→ 读写文件 / 执行命令 → 强制验证环 → 中文总结
 ```
 
-It is intentionally small, readable, and MIT-licensed — suitable as a portfolio / teaching project, and as a starting point for your own agent experiments.
+## v0.2 新特性
 
-## Why this project (not a big fork)
+- **多 Provider**：`deepseek` / `qwen` / `zhipu` / `moonshot` / `siliconflow` / `openai` / `custom`
+- **强制验证环**：一旦改文件，结束前自动跑 `typecheck` / `test` / `build`（可识别），失败则要求继续修
+- **中文系统提示**：面向国内模型的工作方式与输出风格
 
-| Approach | Verdict |
-|----------|---------|
-| Fork DeepSeek Harness / clone Claude Code | Hard to maintain; hard to claim as your work |
-| **Build a tiny original harness** | Clear ownership, easy to explain in interviews |
-
-Spark Agent focuses on:
-
-- OpenAI-compatible APIs (DeepSeek, OpenAI, local gateways)
-- Workspace-scoped tools (`list_dir` / `read_file` / `write_file` / `run_command`)
-- A transparent agent loop you can read in one sitting
-
-## Quick start
+## 快速开始
 
 ```bash
 git clone https://github.com/HazyStar/spark-agent.git
 cd spark-agent
 npm install
-cp .env.example .env   # set SPARK_API_KEY
+
+# 方式 A：环境变量
+export SPARK_API_KEY=sk-xxx
+
+# 方式 B：本地密钥文件（已 gitignore）
+# echo 'sk-xxx' > deepseek_apikey
+
 npm run build
-node dist/cli.js "List the files in this repo and summarize what it does" -v
+node dist/cli.js -p deepseek "用中文总结这个仓库在做什么" -v
 ```
-
-Dev mode (no build):
-
-```bash
-npm run dev -- "Create examples/hello.txt with Hello Spark" -v
-```
-
-### Environment
-
-| Variable | Default | Meaning |
-|----------|---------|---------|
-| `SPARK_API_KEY` | — | API key (required; `OPENAI_API_KEY` also accepted) |
-| `SPARK_BASE_URL` | `https://api.deepseek.com/v1` | OpenAI-compatible base URL |
-| `SPARK_MODEL` | `deepseek-chat` | Model id |
-| `SPARK_MAX_TURNS` | `20` | Max agent loop turns |
-| `SPARK_WORKSPACE` | `.` | Default workspace root |
 
 ## CLI
 
 ```bash
-spark-agent "<task>" [options]
+spark-agent "<任务>" [options]
 
 Options:
-  -w, --workspace <path>   Workspace root (default: .)
-  -m, --model <name>       Model id
-  --base-url <url>         API base URL
-  --max-turns <n>          Max turns (default: 20)
-  -v, --verbose            Print tool calls
+  -p, --provider <name>    deepseek|qwen|zhipu|moonshot|siliconflow|openai|custom
+  -w, --workspace <path>   工作区根目录
+  -m, --model <name>       覆盖默认模型
+  --base-url <url>         覆盖默认 Base URL
+  --max-turns <n>          最大轮次（默认 20）
+  --no-verify              关闭强制验证环
+  -v, --verbose            打印工具与验证日志
 ```
 
-After `npm link` (optional):
+### Provider 默认值
 
-```bash
-npm link
-spark-agent "Run npm run typecheck and fix any errors" -v
-```
+| Provider | Base URL | 默认模型 | Key 环境变量 / 文件 |
+|----------|----------|----------|---------------------|
+| deepseek | `https://api.deepseek.com/v1` | `deepseek-chat` | `DEEPSEEK_API_KEY` / `deepseek_apikey` |
+| qwen | DashScope compatible | `qwen-coder-plus` | `DASHSCOPE_API_KEY` / `qwen_apikey` |
+| zhipu | BigModel v4 | `glm-4-flash` | `ZHIPU_API_KEY` / `zhipu_apikey` |
+| moonshot | `https://api.moonshot.cn/v1` | `moonshot-v1-auto` | `MOONSHOT_API_KEY` |
+| siliconflow | `https://api.siliconflow.cn/v1` | DeepSeek-V3 | `SILICONFLOW_API_KEY` |
+| openai | `https://api.openai.com/v1` | `gpt-4o-mini` | `OPENAI_API_KEY` |
+| custom | `SPARK_BASE_URL` | `SPARK_MODEL` | `SPARK_API_KEY` |
 
-## Architecture
+## 架构
 
 ```text
 src/
-  cli.ts          # CLI entry
-  agent.ts        # agent loop
-  llm.ts          # chat/completions client
-  tools/
-    index.ts      # tool schemas + dispatch
-    fs.ts         # sandboxed file tools
-    shell.ts      # workspace-scoped shell
+  cli.ts          # CLI / provider 解析
+  providers.ts    # 国内 API 预设与 Key 解析
+  prompt.ts       # 中文 system prompt
+  agent.ts        # Agent 循环 + 验证门闩
+  verify.ts       # 自动发现并执行验证命令
+  llm.ts          # OpenAI-compatible chat/completions
+  tools/          # list_dir / read_file / write_file / run_command
 ```
 
-### Safety notes (MVP)
+## 安全说明（MVP）
 
-- File tools resolve paths under the workspace and reject `..` escapes
-- Shell runs with `cwd = workspace`
-- A few obviously dangerous command patterns are blocked
-- This is **not** a full sandbox (no container / seccomp). Use on trusted local tasks only.
+- 文件路径限制在 workspace 内
+- Shell `cwd` 固定为 workspace，并拦截少量高危命令模式
+- **不是**容器级沙箱；请只在可信本地任务中使用
+- 切勿提交 `*_apikey` / `github_token` / `.env`
 
-## Roadmap ideas
+## 路线图
 
-- Streaming + prettier TUI
-- Patch-based edits (`apply_patch`) instead of full-file writes
-- MCP tool bridge
-- Eval harness (task suite + scores)
-- Plugin profile system (inspired by — not forked from — larger harnesses)
+- [ ] `apply_patch` 局部编辑
+- [ ] Provider 级重试 / JSON 修复
+- [ ] 小型评测集（国内模型成功率对比）
+- [ ] MCP 工具桥
+- [ ] 更友好的 TUI
 
 ## License
 
 MIT © HazyStar
-
-## Positioning vs popular agents
-
-- **Claude Code / Codex**: polished product agents — great to use daily
-- **DeepSeek Harness / OpenClaw**: large extensible runtimes
-- **Spark Agent**: a *small original* reference implementation of the harness loop, written so you can learn, demo, and extend it

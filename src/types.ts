@@ -33,4 +33,7 @@ export interface AgentConfig {
   workspace: string;
   maxTurns: number;
   verbose: boolean;
+  /** When true, edits trigger an automatic verify gate before finish. */
+  verify: boolean;
+  provider: string;
 }

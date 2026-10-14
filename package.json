@@ -1,7 +1,7 @@
 {
   "name": "spark-agent",
-  "version": "0.1.0",
-  "description": "A minimal open-source coding agent harness — agent loop + tools, OpenAI-compatible (DeepSeek / etc.)",
+  "version": "0.2.0",
+  "description": "Coding agent harness optimized for China LLM APIs — multi-provider, verify loop, Chinese prompts",
   "type": "module",
   "bin": {
     "spark-agent": "./dist/cli.js"

@@ -7,13 +7,13 @@ export const toolDefinitions: ToolDefinition[] = [
     type: "function",
     function: {
       name: "list_dir",
-      description: "List files and directories under a path relative to the workspace root.",
+      description: "列出工作区相对路径下的文件与目录。",
       parameters: {
         type: "object",
         properties: {
           path: {
             type: "string",
-            description: "Relative directory path. Defaults to '.'",
+            description: "相对目录路径，默认 '.'",
           },
         },
         additionalProperties: false,
@@ -24,11 +24,11 @@ export const toolDefinitions: ToolDefinition[] = [
     type: "function",
     function: {
       name: "read_file",
-      description: "Read a UTF-8 text file relative to the workspace root.",
+      description: "读取工作区内的 UTF-8 文本文件。",
       parameters: {
         type: "object",
         properties: {
-          path: { type: "string", description: "Relative file path" },
+          path: { type: "string", description: "相对文件路径" },
         },
         required: ["path"],
         additionalProperties: false,
@@ -39,12 +39,12 @@ export const toolDefinitions: ToolDefinition[] = [
     type: "function",
     function: {
       name: "write_file",
-      description: "Create or overwrite a UTF-8 text file relative to the workspace root.",
+      description: "创建或覆盖工作区内的 UTF-8 文本文件。修改后应进行验证。",
       parameters: {
         type: "object",
         properties: {
-          path: { type: "string", description: "Relative file path" },
-          content: { type: "string", description: "Full file content to write" },
+          path: { type: "string", description: "相对文件路径" },
+          content: { type: "string", description: "要写入的完整文件内容" },
         },
         required: ["path", "content"],
         additionalProperties: false,
@@ -56,11 +56,11 @@ export const toolDefinitions: ToolDefinition[] = [
     function: {
       name: "run_command",
       description:
-        "Run a shell command inside the workspace. Prefer short, non-interactive commands (tests, builds, git status).",
+        "在工作区内执行 shell 命令。优先短时、非交互命令（typecheck / test / build / git status）。",
       parameters: {
         type: "object",
         properties: {
-          command: { type: "string", description: "Shell command to execute" },
+          command: { type: "string", description: "要执行的 shell 命令" },
         },
         required: ["command"],
         additionalProperties: false,
