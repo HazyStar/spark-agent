@@ -1,0 +1,37 @@
+{
+  "name": "spark-agent",
+  "version": "0.1.0",
+  "description": "A minimal open-source coding agent harness (OpenAI-compatible). Learn the loop, not the brand.",
+  "type": "module",
+  "bin": {
+    "spark-agent": "./dist/cli.js"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "dev": "tsx src/cli.ts",
+    "start": "node dist/cli.js",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "keywords": [
+    "agent",
+    "coding-agent",
+    "harness",
+    "openai-compatible",
+    "cli",
+    "tool-calling"
+  ],
+  "author": "HazyStar",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "commander": "^13.1.0",
+    "zod": "^3.24.2"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.10",
+    "tsx": "^4.19.3",
+    "typescript": "^5.8.2"
+  }
+}
