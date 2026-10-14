@@ -133,7 +133,9 @@ export function resolveProvider(options: {
     const envs = preset.keyEnv.join(" / ");
     const files = preset.keyFiles.join(" / ");
     throw new Error(
-      `缺少 API Key（provider=${preset.id}）。请设置环境变量 ${envs}，或在工作目录放置 ${files}`,
+      `缺少 API Key（provider=${preset.id}）。\n` +
+        `请设置环境变量 ${envs}，\n` +
+        `或在仓库根目录 / 当前目录放置密钥文件：${files}`,
     );
   }
 

@@ -12,7 +12,28 @@ loadDotenv();
 const here = path.dirname(fileURLToPath(import.meta.url));
 const packageRoot = path.resolve(here, "..");
 
+const HELP_EXAMPLES = `
+示例:
+  npm run spark -- "用中文总结这个仓库" -v
+  npm run spark -- -p deepseek -w ./my-app "修复 typecheck" -v
+  spark-agent -p qwen "给 README 加一节安装说明" -v
+  spark-agent -p custom --base-url http://127.0.0.1:8000/v1 -m my-model "列出文件"
+
+密钥:
+  环境变量 SPARK_API_KEY / DEEPSEEK_API_KEY 等
+  或本地文件 deepseek_apikey / qwen_apikey（已 gitignore）
+  详见 docs/getting-started.md
+`;
+
 const program = new Command();
+
+if (process.argv.length <= 2) {
+  console.error("Spark Agent — 面向国内大模型 API 的迷你 Coding Agent\n");
+  console.error('用法: npm run spark -- "<任务>" -v');
+  console.error("     spark-agent -p deepseek \"<任务>\" -v\n");
+  console.error(HELP_EXAMPLES.trim());
+  process.exit(1);
+}
 
 program
   .name("spark-agent")
@@ -41,15 +62,7 @@ program
   )
   .option("--no-verify", "关闭强制验证环")
   .option("-v, --verbose", "打印工具调用与验证日志", false)
-  .addHelpText(
-    "after",
-    `
-示例:
-  spark-agent -p deepseek "用中文总结这个仓库" -v
-  spark-agent -p qwen "给 README 加一节安装说明" -v
-  spark-agent -p custom --base-url http://127.0.0.1:8000/v1 -m my-model "列出文件"
-`,
-  )
+  .addHelpText("after", HELP_EXAMPLES)
   .action(async (task: string, opts: {
     provider: string;
     workspace: string;
@@ -72,6 +85,12 @@ program
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       console.error(message);
+      console.error("");
+      console.error("配置密钥的常用方式：");
+      console.error("  1) echo sk-xxx > deepseek_apikey   # 仓库根目录，已 gitignore");
+      console.error("  2) 设置环境变量 SPARK_API_KEY 或 DEEPSEEK_API_KEY");
+      console.error("  3) 复制 .env.example 为 .env 后填写");
+      console.error("详见 docs/getting-started.md");
       process.exit(1);
     }
 
