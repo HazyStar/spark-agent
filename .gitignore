@@ -11,3 +11,5 @@ coverage/
 .idea/
 .vscode/
 *.tsbuildinfo
+evals/lite/results/lite-*.json
+evals/lite/results/lite-*.md

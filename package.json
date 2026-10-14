@@ -1,6 +1,6 @@
 {
   "name": "spark-agent",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Coding agent harness optimized for China LLM APIs — multi-provider, verify loop, Chinese prompts",
   "type": "module",
   "bin": {
@@ -10,7 +10,11 @@
     "build": "tsc",
     "dev": "tsx src/cli.ts",
     "start": "node dist/cli.js",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "eval:lite": "npm run build && node scripts/run-eval.mjs --mode compare",
+    "eval:lite:verify": "npm run build && node scripts/run-eval.mjs --mode verify",
+    "eval:lite:baseline": "npm run build && node scripts/run-eval.mjs --mode no-verify",
+    "eval:lite:chat": "npm run build && node scripts/run-eval.mjs --mode chat"
   },
   "keywords": [
     "agent",

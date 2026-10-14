@@ -82,7 +82,9 @@ export async function runAgent(config: AgentConfig, task: string): Promise<strin
         name === "run_command" &&
         dirty &&
         /exit_code:\s*0\b/.test(result) &&
-        /(typecheck|test|build|pytest|cargo check|go test)/i.test(args)
+        /(typecheck|test|build|pytest|cargo check|go test|verify\.mjs|check\.mjs)/i.test(
+          args,
+        )
       ) {
         verifiedClean = true;
         dirty = false;

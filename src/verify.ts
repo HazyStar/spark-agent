@@ -8,6 +8,19 @@ export interface VerifyPlan {
 }
 
 export async function detectVerifyPlan(workspace: string): Promise<VerifyPlan> {
+  // Prefer explicit harness oracles used by Spark Lite evals
+  for (const oracle of ["verify.mjs", "check.mjs"]) {
+    try {
+      await fs.access(path.join(workspace, oracle));
+      return {
+        commands: [`node ${oracle}`],
+        reason: oracle,
+      };
+    } catch {
+      // continue
+    }
+  }
+
   const pkgPath = path.join(workspace, "package.json");
   try {
     const raw = await fs.readFile(pkgPath, "utf8");

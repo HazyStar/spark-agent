@@ -80,11 +80,30 @@ src/
 - **不是**容器级沙箱；请只在可信本地任务中使用
 - 切勿提交 `*_apikey` / `github_token` / `.env`
 
+## 评测：证明 Harness 有效
+
+固定同一模型，对比三种设置：
+
+| Mode | 含义 |
+|------|------|
+| `chat` | 无工具，一次 JSON 改文件 |
+| `no-verify` | 工具环，关闭验证门闩 |
+| `verify` | 工具环 + 强制验证门闩 |
+
+```bash
+npm run eval:lite
+```
+
+详见 [`evals/lite/README.md`](./evals/lite/README.md)。
+
+**已跑结果（DeepSeek-chat）**：Lite 15 题对强模型过易，三种模式均可冲到满分 —— 说明评测基建可用；下一步用更弱国内模型或 SWE-bench 子集拉开差距。见 [`evals/lite/results/latest.md`](./evals/lite/results/latest.md)。
+
 ## 路线图
 
+- [x] 小型评测集 Spark Lite（10 题，verify on/off 对比）
 - [ ] `apply_patch` 局部编辑
 - [ ] Provider 级重试 / JSON 修复
-- [ ] 小型评测集（国内模型成功率对比）
+- [ ] Aider / SWE-bench 子集对照
 - [ ] MCP 工具桥
 - [ ] 更友好的 TUI
 
