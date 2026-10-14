@@ -1,84 +1,111 @@
 # Spark Agent
 
-A **minimal open-source coding agent harness** in TypeScript.
+**A minimal open-source coding agent harness** — not a fork of Claude Code / Codex / DeepSeek Harness.
 
-Not a fork of DeepSeek Harness / Codex / Claude Code / OpenClaw.  
-This project is intentionally small: one agent loop + a few tools + OpenAI-compatible LLM API — so you can read the whole codebase and understand how coding agents work.
+> 中文：这是一个**自研、可读、MIT 开源**的迷你 Coding Agent，用来展示「Agent 循环 + 工具调用」的核心，而不是 fork 大型产品。适合作为作品集样例与二次开发起点。
 
-## Why this exists
+Spark Agent shows the *core loop* behind modern coding agents:
 
-Products like Claude Code and Codex are polished end-user agents.  
-Spark Agent is a **learning / portfolio / DIY base**:
+```text
+user → LLM (tool calling) → tools (fs / shell) → observe → repeat → final answer
+```
 
-- Clear agent loop (plan → tool calls → observe → repeat)
-- Sandboxed workspace tools (`list_dir` / `read_file` / `write_file` / `run_command`)
-- Works with **DeepSeek / OpenAI / any OpenAI-compatible gateway**
-- MIT licensed, easy to extend
+It is intentionally small, readable, and MIT-licensed — suitable as a portfolio / teaching project, and as a starting point for your own agent experiments.
 
-Use it to study harness design, demo tool-calling in interviews, or grow into your own specialized agent.
+## Why this project (not a big fork)
+
+| Approach | Verdict |
+|----------|---------|
+| Fork DeepSeek Harness / clone Claude Code | Hard to maintain; hard to claim as your work |
+| **Build a tiny original harness** | Clear ownership, easy to explain in interviews |
+
+Spark Agent focuses on:
+
+- OpenAI-compatible APIs (DeepSeek, OpenAI, local gateways)
+- Workspace-scoped tools (`list_dir` / `read_file` / `write_file` / `run_command`)
+- A transparent agent loop you can read in one sitting
 
 ## Quick start
 
 ```bash
+git clone https://github.com/HazyStar/spark-agent.git
+cd spark-agent
 npm install
 cp .env.example .env   # set SPARK_API_KEY
 npm run build
-node dist/cli.js "List the project files and summarize what this repo does"
+node dist/cli.js "List the files in this repo and summarize what it does" -v
 ```
 
-Dev mode without build:
+Dev mode (no build):
 
 ```bash
-npx tsx src/cli.ts "Add a hello.txt that says spark-agent works"
+npm run dev -- "Create examples/hello.txt with Hello Spark" -v
 ```
 
 ### Environment
 
 | Variable | Default | Meaning |
 |----------|---------|---------|
-| `SPARK_API_KEY` | required | API key (`OPENAI_API_KEY` also accepted) |
-| `SPARK_BASE_URL` | `https://api.deepseek.com` | OpenAI-compatible base URL |
+| `SPARK_API_KEY` | — | API key (required; `OPENAI_API_KEY` also accepted) |
+| `SPARK_BASE_URL` | `https://api.deepseek.com/v1` | OpenAI-compatible base URL |
 | `SPARK_MODEL` | `deepseek-chat` | Model id |
-| `SPARK_MAX_TURNS` | `20` | Max loop turns |
-| `SPARK_TIMEOUT_MS` | `120000` | LLM request timeout |
+| `SPARK_MAX_TURNS` | `20` | Max agent loop turns |
+| `SPARK_WORKSPACE` | `.` | Default workspace root |
+
+## CLI
+
+```bash
+spark-agent "<task>" [options]
+
+Options:
+  -w, --workspace <path>   Workspace root (default: .)
+  -m, --model <name>       Model id
+  --base-url <url>         API base URL
+  --max-turns <n>          Max turns (default: 20)
+  -v, --verbose            Print tool calls
+```
+
+After `npm link` (optional):
+
+```bash
+npm link
+spark-agent "Run npm run typecheck and fix any errors" -v
+```
 
 ## Architecture
 
 ```text
-User task
-   │
-   ▼
-┌─────────────┐     tool_calls      ┌──────────────────┐
-│  Agent loop │ ──────────────────► │ Tools (workspace)│
-│  (agent.ts) │ ◄────────────────── │ list/read/write  │
-└──────┬──────┘     observations    │ run_command      │
-       │                            └──────────────────┘
-       ▼
- OpenAI-compatible Chat Completions
- (DeepSeek / OpenAI / local proxy)
+src/
+  cli.ts          # CLI entry
+  agent.ts        # agent loop
+  llm.ts          # chat/completions client
+  tools/
+    index.ts      # tool schemas + dispatch
+    fs.ts         # sandboxed file tools
+    shell.ts      # workspace-scoped shell
 ```
 
-Key files:
+### Safety notes (MVP)
 
-- `src/cli.ts` — CLI entry
-- `src/agent.ts` — agent loop
-- `src/llm.ts` — chat completions client
-- `src/tools/` — workspace-bound tools
+- File tools resolve paths under the workspace and reject `..` escapes
+- Shell runs with `cwd = workspace`
+- A few obviously dangerous command patterns are blocked
+- This is **not** a full sandbox (no container / seccomp). Use on trusted local tasks only.
 
-## Safety notes
+## Roadmap ideas
 
-- Paths are resolved under `--workspace` and cannot escape with `..`
-- `run_command` still executes real shell commands inside the workspace — treat untrusted prompts carefully
-- Do not commit API keys
-
-## Roadmap (good first extensions)
-
-- [ ] Streaming token output
-- [ ] Permission prompts before write / shell
-- [ ] MCP tool bridge
-- [ ] Multi-agent / sub-agent handoff
-- [ ] Eval suite (task → expected files/tests)
+- Streaming + prettier TUI
+- Patch-based edits (`apply_patch`) instead of full-file writes
+- MCP tool bridge
+- Eval harness (task suite + scores)
+- Plugin profile system (inspired by — not forked from — larger harnesses)
 
 ## License
 
 MIT © HazyStar
+
+## Positioning vs popular agents
+
+- **Claude Code / Codex**: polished product agents — great to use daily
+- **DeepSeek Harness / OpenClaw**: large extensible runtimes
+- **Spark Agent**: a *small original* reference implementation of the harness loop, written so you can learn, demo, and extend it

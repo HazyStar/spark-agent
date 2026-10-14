@@ -1,19 +1,23 @@
 import { chatCompletion } from "./llm.js";
-import { executeTool, toolSpecs } from "./tools/index.js";
+import { executeTool, toolDefinitions } from "./tools/index.js";
 import type { AgentConfig, ChatMessage } from "./types.js";
 
-const SYSTEM_PROMPT = `You are Spark Agent, a minimal coding agent running inside a local workspace.
+const SYSTEM_PROMPT = `You are Spark Agent, a minimal coding agent running in a local workspace.
+
+Goals:
+- Solve the user's software task by inspecting and editing files in the workspace.
+- Prefer small, correct changes over large speculative rewrites.
+- Use tools when you need real filesystem or shell evidence.
+- When finished, stop calling tools and give a concise final summary of what you did.
 
 Rules:
-1. Prefer tools over guessing. Inspect the workspace before editing.
-2. Keep changes small and focused on the user goal.
-3. After edits, run a relevant check command when possible (tests, typecheck, or a quick smoke command).
-4. Never try to escape the workspace.
-5. When finished, stop calling tools and give a short summary of what you did and how to verify it.
+- Stay inside the workspace. Do not attempt to escape it.
+- Do not print secrets from the environment.
+- Prefer run_command for verification (tests, typecheck, scripts) after edits.
 `;
 
 function log(verbose: boolean, ...args: unknown[]): void {
-  if (verbose) console.log(...args);
+  if (verbose) console.error(...args);
 }
 
 export async function runAgent(config: AgentConfig, task: string): Promise<string> {
@@ -24,30 +28,27 @@ export async function runAgent(config: AgentConfig, task: string): Promise<strin
 
   for (let turn = 1; turn <= config.maxTurns; turn++) {
     log(config.verbose, `\n=== turn ${turn}/${config.maxTurns} ===`);
-    const assistant = await chatCompletion(config, messages, toolSpecs);
+
+    const assistant = await chatCompletion(config, messages, toolDefinitions);
     messages.push({
       role: "assistant",
       content: assistant.content ?? null,
       tool_calls: assistant.tool_calls,
     });
 
-    if (assistant.content) {
-      console.log(`\nassistant:\n${assistant.content}`);
+    const toolCalls = assistant.tool_calls ?? [];
+    if (toolCalls.length === 0) {
+      const finalText = (assistant.content ?? "").trim();
+      return finalText || "(agent finished with empty response)";
     }
 
-    const calls = assistant.tool_calls ?? [];
-    if (calls.length === 0) {
-      return assistant.content?.trim() || "(done)";
-    }
-
-    for (const call of calls) {
+    for (const call of toolCalls) {
       const name = call.function.name;
       const args = call.function.arguments;
-      console.log(`\n→ tool ${name}(${args})`);
+      log(config.verbose, `→ ${name}(${args})`);
       const result = await executeTool(config.workspace, name, args);
-      const preview =
-        result.length > 1200 ? `${result.slice(0, 1200)}\n...[truncated]` : result;
-      console.log(preview);
+      log(config.verbose, `← ${result.slice(0, 500)}${result.length > 500 ? "..." : ""}`);
+
       messages.push({
         role: "tool",
         tool_call_id: call.id,
@@ -57,5 +58,5 @@ export async function runAgent(config: AgentConfig, task: string): Promise<strin
     }
   }
 
-  return `Stopped after maxTurns=${config.maxTurns}. Increase SPARK_MAX_TURNS if needed.`;
+  return `Stopped after max turns (${config.maxTurns}). Increase --max-turns if the task needs more steps.`;
 }

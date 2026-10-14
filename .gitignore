@@ -7,7 +7,4 @@ dist/
 coverage/
 .idea/
 .vscode/
-
-github_token
-*.pem
-
+*.tsbuildinfo

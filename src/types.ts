@@ -17,7 +17,7 @@ export interface ChatMessage {
   name?: string;
 }
 
-export interface ToolSpec {
+export interface ToolDefinition {
   type: "function";
   function: {
     name: string;
@@ -32,6 +32,5 @@ export interface AgentConfig {
   model: string;
   workspace: string;
   maxTurns: number;
-  timeoutMs: number;
   verbose: boolean;
 }

@@ -1,20 +1,22 @@
-import type { ToolSpec } from "../types.js";
-import { listDir, readFile, runCommand, writeFile } from "./workspace.js";
+import type { ToolDefinition } from "../types.js";
+import { listDir, readFileTool, writeFileTool } from "./fs.js";
+import { runCommand } from "./shell.js";
 
-export const toolSpecs: ToolSpec[] = [
+export const toolDefinitions: ToolDefinition[] = [
   {
     type: "function",
     function: {
       name: "list_dir",
-      description: "List files and directories under a workspace-relative path.",
+      description: "List files and directories under a path relative to the workspace root.",
       parameters: {
         type: "object",
         properties: {
           path: {
             type: "string",
-            description: "Relative directory path. Default: .",
+            description: "Relative directory path. Defaults to '.'",
           },
         },
+        additionalProperties: false,
       },
     },
   },
@@ -22,13 +24,14 @@ export const toolSpecs: ToolSpec[] = [
     type: "function",
     function: {
       name: "read_file",
-      description: "Read a text file inside the workspace.",
+      description: "Read a UTF-8 text file relative to the workspace root.",
       parameters: {
         type: "object",
         properties: {
           path: { type: "string", description: "Relative file path" },
         },
         required: ["path"],
+        additionalProperties: false,
       },
     },
   },
@@ -36,14 +39,15 @@ export const toolSpecs: ToolSpec[] = [
     type: "function",
     function: {
       name: "write_file",
-      description: "Create or overwrite a text file inside the workspace.",
+      description: "Create or overwrite a UTF-8 text file relative to the workspace root.",
       parameters: {
         type: "object",
         properties: {
           path: { type: "string", description: "Relative file path" },
-          content: { type: "string", description: "Full file content" },
+          content: { type: "string", description: "Full file content to write" },
         },
         required: ["path", "content"],
+        additionalProperties: false,
       },
     },
   },
@@ -52,13 +56,14 @@ export const toolSpecs: ToolSpec[] = [
     function: {
       name: "run_command",
       description:
-        "Run a shell command inside the workspace (tests, builds, git status, etc.).",
+        "Run a shell command inside the workspace. Prefer short, non-interactive commands (tests, builds, git status).",
       parameters: {
         type: "object",
         properties: {
           command: { type: "string", description: "Shell command to execute" },
         },
         required: ["command"],
+        additionalProperties: false,
       },
     },
   },
@@ -67,13 +72,13 @@ export const toolSpecs: ToolSpec[] = [
 export async function executeTool(
   workspace: string,
   name: string,
-  rawArgs: string,
+  argsJson: string,
 ): Promise<string> {
-  let args: Record<string, unknown> = {};
+  let args: Record<string, unknown>;
   try {
-    args = rawArgs ? (JSON.parse(rawArgs) as Record<string, unknown>) : {};
+    args = JSON.parse(argsJson || "{}") as Record<string, unknown>;
   } catch {
-    return `Invalid JSON arguments: ${rawArgs}`;
+    return `Invalid JSON arguments: ${argsJson}`;
   }
 
   try {
@@ -81,9 +86,9 @@ export async function executeTool(
       case "list_dir":
         return await listDir(workspace, String(args.path ?? "."));
       case "read_file":
-        return await readFile(workspace, String(args.path ?? ""));
+        return await readFileTool(workspace, String(args.path ?? ""));
       case "write_file":
-        return await writeFile(
+        return await writeFileTool(
           workspace,
           String(args.path ?? ""),
           String(args.content ?? ""),
@@ -94,6 +99,7 @@ export async function executeTool(
         return `Unknown tool: ${name}`;
     }
   } catch (err) {
-    return `Tool error (${name}): ${err instanceof Error ? err.message : String(err)}`;
+    const message = err instanceof Error ? err.message : String(err);
+    return `Tool error (${name}): ${message}`;
   }
 }

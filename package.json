@@ -1,24 +1,25 @@
 {
   "name": "spark-agent",
   "version": "0.1.0",
-  "description": "A minimal open-source coding agent harness (OpenAI-compatible). Learn the loop, not the brand.",
+  "description": "A minimal open-source coding agent harness — agent loop + tools, OpenAI-compatible (DeepSeek / etc.)",
   "type": "module",
   "bin": {
     "spark-agent": "./dist/cli.js"
   },
   "scripts": {
-    "build": "tsc -p tsconfig.json",
+    "build": "tsc",
     "dev": "tsx src/cli.ts",
     "start": "node dist/cli.js",
-    "typecheck": "tsc -p tsconfig.json --noEmit"
+    "typecheck": "tsc --noEmit"
   },
   "keywords": [
     "agent",
     "coding-agent",
     "harness",
+    "llm",
+    "tool-calling",
     "openai-compatible",
-    "cli",
-    "tool-calling"
+    "deepseek"
   ],
   "author": "HazyStar",
   "license": "MIT",
@@ -27,11 +28,20 @@
   },
   "dependencies": {
     "commander": "^13.1.0",
+    "dotenv": "^16.4.7",
     "zod": "^3.24.2"
   },
   "devDependencies": {
     "@types/node": "^22.13.10",
     "tsx": "^4.19.3",
     "typescript": "^5.8.2"
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/HazyStar/spark-agent.git"
+  },
+  "bugs": {
+    "url": "https://github.com/HazyStar/spark-agent/issues"
+  },
+  "homepage": "https://github.com/HazyStar/spark-agent#readme"
 }
