@@ -2,6 +2,7 @@ node_modules/
 dist/
 .env
 .env.local
+github_token
 *.log
 .DS_Store
 coverage/
