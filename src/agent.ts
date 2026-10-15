@@ -13,7 +13,7 @@ function log(verbose: boolean, ...args: unknown[]): void {
 }
 
 function toolCallMutates(name: string): boolean {
-  return name === "write_file";
+  return name === "write_file" || name === "apply_patch";
 }
 
 export async function runAgent(config: AgentConfig, task: string): Promise<string> {

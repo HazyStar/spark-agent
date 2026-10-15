@@ -116,7 +116,7 @@ src/
   agent.ts        # Agent 循环 + 验证门闩
   verify.ts       # 自动发现并执行验证命令
   llm.ts          # OpenAI-compatible chat/completions
-  tools/          # list_dir / read_file / write_file / run_command
+  tools/          # list_dir / grep / read_file / apply_patch / write_file / run_command
 ```
 
 ## 评测
@@ -148,7 +148,7 @@ npm run eval:lite
 
 - [x] 国内多 Provider + 中文提示 + 强制验证环  
 - [x] Spark Lite 评测（chat / no-verify / verify）  
-- [ ] `apply_patch` 局部编辑  
+- [x] `apply_patch` 局部编辑 + `grep` 代码搜索
 - [ ] Provider 级重试 / JSON 修复  
 - [ ] 更弱模型对比 + SWE-bench 子集  
 - [ ] npm 发布（当前推荐 git clone）  
